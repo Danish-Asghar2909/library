@@ -1,6 +1,26 @@
 const express = require('express')
 const router = express.Router()
-const Subscriber = require('../models/subscriber')
+const Subscriber = require('../models/member')
+const Books = require('../models/books')
+
+router.put('/checkout' , async ( req , res)=>{
+    try{
+      const bookId = req.body.bookId;
+      if(!bookId) return res.status(500).json({"message" : "Invalid Request , provide book id"})
+
+      const availableBooks = await Books.findOne({ BookID : bookId})
+
+      if(!availableBooks) return res.status(500).json({ message : `Invalid Book ID : ${bookId}`})
+      if( availableBooks.NumberOfCopies <= 0){
+        return res.status(500).json({ "message" : "Book is out of Stock "})
+      }
+      const updatedList = await Books.updateOne({ BookID : bookId }, {$inc : { NumberOfCopies : -1}})
+      return res.status(200).json({"message":`Successfull checkout of ${bookId}`})
+
+    }catch( err ){
+      res.status(500).json({ message: err.message })
+    }
+})
 
 // Getting all
 router.get('/', async (req, res) => {
